@@ -48,9 +48,6 @@ func New(
 	// setup repo
 	repo := repository.New(logger, db, cacheClient)
 
-	// setup service
-	//userSvc := userservice.New(repo, email)
-
 	// setup handler
 	systemHandler := system_handlers.New(buildInfo)
 	sessionHandler := session_handlers.New(logger, repo)
@@ -62,17 +59,17 @@ func New(
 	// For profiling
 	pprof.Register(r, "api/v1/debug/pprof")
 
-	// Business endpoint
+	// Auth endpoint
 	sessionURL := r.Group("api/v1/sessions")
 	sessionURL.POST("/login", sessionHandler.Login)
 	sessionURL.POST("/logout", sessionHandler.Logout)
 
+	// Business endpoint
 	userURL := r.Group("api/v1/investors")
 	userURL.POST("/signup", userHandler.Signup)
 
 	// Swagger API Docs for QA/Dev
 	if isDevEnv {
-		//docs.SwaggerInfo.Host = address
 		_ = gin_swagger.URL(address + " /swagger/doc.json")
 		r.GET("/swagger/*any", gin_swagger.WrapHandler(swagger_files.Handler))
 	}

@@ -1,6 +1,17 @@
 ### Requirements:
 - Go version 1.16
 
+### RUN:
+
+```
+$ make install // load dependencies
+$ cp .env.example .env
+## => change HOST variable in .env to current location
+$ mkdir config && cp conf.toml config/conf.toml
+$ make docker-compose-up
+$ make run-api
+```
+
 ### Struct folder layout
 ```
 /docs
