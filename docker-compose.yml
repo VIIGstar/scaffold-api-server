@@ -1,0 +1,48 @@
+version: '3.7'
+
+services:
+  redis:
+    container_name: "scaffold-redis"
+    image: redis:6.2.6-alpine
+    ports:
+      - "6379:6379"
+
+  mysql:
+    container_name: "scaffold-mysql"
+    image: mysql:8.0.23
+    ports:
+      - "3306:3306"
+    networks:
+      - default
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DATABASE_NAME}
+      MYSQL_USER: ${DATABASE_USER}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD}
+
+    # we mount a data volume to make sure we don't lose data
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  api:
+    container_name:  "scaffold-api-server"
+    # we want to use the image which is build from our Dockerfile
+    build:
+      context: .
+      dockerfile: api.Dockerfile
+    ports:
+      - "4000:4000"
+    # we are depending on the mysql backend
+    depends_on:
+      - mysql
+    volumes:
+      - type: bind
+        source: $HOST/config
+        target: /app/config
+
+networks:
+  default:
+volumes:
+  mysql_data:

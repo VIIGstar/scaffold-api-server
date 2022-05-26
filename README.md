@@ -3,7 +3,7 @@
 
 ### Struct folder layout
 ```
-/api
+/docs
 
 - OpenAPI/Swagger specs, JSON schema files, protocol definition files.
 
