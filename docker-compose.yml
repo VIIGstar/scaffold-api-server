@@ -27,8 +27,10 @@ services:
     command: --default-authentication-plugin=mysql_native_password
 
   api:
-    container_name:  "scaffold-api-server"
     # we want to use the image which is build from our Dockerfile
+    # remove container + build, replace with image
+    # image: ghcr.io/viigstar/scaffold-api-server:latest
+    container_name:  "scaffold-api-server"
     build:
       context: .
       dockerfile: api.Dockerfile

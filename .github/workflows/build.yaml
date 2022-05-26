@@ -1,0 +1,92 @@
+name: Build and deploy API Server
+on:
+  push:
+    branches:
+      - develop
+env:
+  IMAGE_NAME: scalffold-api-server
+
+jobs:
+  # Push image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
+  push:
+    runs-on: ubuntu-18.04
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Lower case owner name
+        run: |
+          echo "OWNER_LC=${OWNER,,}" >>${GITHUB_ENV}
+        env:
+          OWNER: '${{ github.repository_owner }}'
+
+      - name: Set env short commit hash
+        id: vars
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+      - name: Build image
+        run: |
+          docker build . \
+          --file api.Dockerfile \
+          --tag $IMAGE_NAME \
+          --label "runnumber=${GITHUB_RUN_ID}" \
+          --build-arg "VERSION=1" \
+          --build-arg "COMMIT_HASH=${{ steps.vars.outputs.sha_short }}" \
+          --build-arg "BUILD_DATE=echo $(date '+%Y-%m-%dT%T')"
+
+      - name: Push image
+        run: |
+          echo "${{ secrets.DEV_DEPLOY_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          IMAGE_ID=ghcr.io/${OWNER_LC}/$IMAGE_NAME
+          docker tag $IMAGE_NAME $IMAGE_ID
+          docker push $IMAGE_ID
+
+  deploy:
+    needs: push
+    runs-on: ubuntu-18.04
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: root
+          password: ${{ secrets.DEV_SERVER_PASSWORD }}
+          port: ${{ secrets.DEV_SERVER_PORT }}
+          script_stop: true
+          script: |
+            cd /home/root/workspace/scaffold-api-server
+            yes | cp -r conf.toml config/conf.toml
+
+            echo "${{ secrets.DEV_DEPLOY_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            source .env
+            export $(cut -d= -f1 .env)
+            export IMAGE_NAME=ghcr.io/viigstar/scaffold-api-server
+            
+            docker pull $IMAGE_NAME:latest
+            docker-compose up -d
+            
+            docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
+        env:
+          OWNER: '${{ github.repository_owner }}'
+
+  notifification:
+    needs: deploy
+    runs-on: ubuntu-18.04
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - uses: sarisia/actions-status-discord@v1
+        if: always()
+        with:
+          webhook: ${{ secrets.DEPLOY_WEBHOOK_URL }}
