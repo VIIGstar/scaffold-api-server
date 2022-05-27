@@ -1,11 +1,11 @@
-package entities
+package base_entity
 
 import (
 	"gorm.io/gorm"
 	"time"
 )
 
-type DefaultModel struct {
+type Base struct {
 	ID        uint           `json:"id" gorm:"primarykey"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`

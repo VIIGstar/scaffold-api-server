@@ -1,7 +1,9 @@
 package entities
 
+import base_entity "scaffold-api-server/pkg/base-entity"
+
 type Investor struct {
-	DefaultModel
+	base_entity.Base
 	Address     string `json:"address" gorm:"size:512;uniqueIndex"`
 	NetworkName string `json:"network_name" gorm:"size:32"`
 	NetworkURL  string `json:"network_url" gorm:"size:512"`

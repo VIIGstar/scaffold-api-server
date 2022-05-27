@@ -17,6 +17,7 @@ import (
 	"scaffold-api-server/internal/services/database"
 	"scaffold-api-server/internal/services/log"
 	"scaffold-api-server/pkg/auth"
+	base_entity "scaffold-api-server/pkg/base-entity"
 	"scaffold-api-server/pkg/config"
 	"testing"
 )
@@ -42,7 +43,7 @@ var (
 func TestSessionHandler_Login(t *testing.T) {
 	sqlDB, mock, _ := sqlmock.New()
 	investor := entities.Investor{
-		DefaultModel: entities.DefaultModel{
+		Base: base_entity.Base{
 			ID: 1,
 		},
 		Address:     walletAddress,
